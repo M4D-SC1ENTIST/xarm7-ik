@@ -5,8 +5,8 @@ This package provides a fast inverse kinematics (IK) solver for the xArm7 roboti
 
 ## Features
 - Fast inverse kinematics for xArm7 (7-DOF) and xArm7 with linear rail (8-DOF)
-- Supports quaternion and rotation matrix representations
-- Easy integration with simulation environments (e.g., Mujoco)
+- Supports quaternion, Euler angle, and axis-angle rotation representations
+- Lightweight and easy to integrate
 
 ## Installation
 
