@@ -3,8 +3,8 @@ import nlopt
 import enum
 from numba import jit
 from scipy.spatial.transform import Rotation as R
-from utils import normalize_quaternion, quaternion_multiply, axis_angle_to_quaternion
-from kinematics import ik_objective_function_nlopt
+from .utils import normalize_quaternion, quaternion_multiply, axis_angle_to_quaternion
+from .kinematics import ik_objective_function_nlopt
 
 class RotationRepresentation(enum.Enum):
     QUATERNION = "quaternion"
@@ -46,6 +46,25 @@ class InverseKinematicsSolver():
             self.opt.set_upper_bounds([bound[1] for bound in self.bounds[:7]])
         self.opt.set_xtol_rel(1e-6)
         self.opt.set_maxtime(0.5)
+
+        # Dry run to warm up the JIT compiler
+        self.init_dry_run()
+    
+    def init_dry_run(self):
+        if self.use_linear_motor:
+            temp_state = np.zeros(8, dtype=np.float64)
+        else:
+            temp_state = np.zeros(7, dtype=np.float64)
+        temp_target_pos = np.array([0.4, 0.0, 0.3], dtype=np.float64)
+        temp_target_quat = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
+        self.opt.set_min_objective(
+            lambda x, grad: ik_objective_function_nlopt(x, 
+                                                        grad, 
+                                                        temp_target_pos, 
+                                                        temp_target_quat, 
+                                                        self.use_linear_motor, 
+                                                        self.linear_motor_x_offset)[0])
+        self.opt.optimize(temp_state)
 
     def inverse_kinematics(self, 
                            initial_configuration, 

@@ -1,6 +1,6 @@
 import numpy as np
 from numba import jit
-from utils import compute_transform_error, matrix_to_quaternion
+from .utils import compute_transform_error, matrix_to_quaternion
 from typing import Tuple
 
 @jit(nopython=True)

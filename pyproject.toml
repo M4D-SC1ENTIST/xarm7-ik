@@ -1,3 +1,4 @@
+
 [project]
 name = "xarm7-ik"
 version = "0.1.0"
@@ -14,3 +15,9 @@ dependencies = [
 examples = [
     "mujoco>=3.3.5",
 ]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
