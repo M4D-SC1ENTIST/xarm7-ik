@@ -21,7 +21,7 @@ def main():
 
     # Solve IK and measure frequency
     import time
-    iter = 10
+    iter = 100
     start_time = time.time()
     for i in range(iter):
         result = ik_solver.inverse_kinematics(
