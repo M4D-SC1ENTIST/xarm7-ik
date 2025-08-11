@@ -1,0 +1,16 @@
+[project]
+name = "xarm7-ik"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "nlopt>=2.9.1",
+    "numba>=0.61.2",
+    "scipy>=1.15.3",
+]
+
+[project.optional-dependencies]
+examples = [
+    "mujoco>=3.3.5",
+]
