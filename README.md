@@ -16,7 +16,10 @@ This package provides a fast inverse kinematics (IK) solver for the xArm7 roboti
 - (Optional for running examples) [mujoco](https://mujoco.org/)
 
 Install via pip:
-
+```bash
+pip install xarm7-ik
+```
+Or clone this repo and:
 ```bash
 pip install .
 # or, for example dependencies (Mujoco):
@@ -48,8 +51,11 @@ To use the IK solver in your own code:
    result = ik_solver.inverse_kinematics(
        initial_configuration,         # np.ndarray of joint angles (7 or 8 elements)
        target_gripper_pos,            # np.ndarray, shape (3,)
-       target_gripper_rot,            # np.ndarray, quaternion (4,) or rotation matrix (3,3)
-       rot_repr=RotationRepresentation.QUATERNION  # or .ROT_MATRIX
+       target_gripper_rot,            # np.ndarray, shape depends on the rotation representation
+       rot_repr=RotationRepresentation.QUATERNION  # or .EULER, .AXIS_ANGLE
+       # Quaternions are in the W-X-Y-Z order
+       # Euler angles are X-Y-Z
+       # Axis-angle representations are (axis, angle)
    )
    # result: np.ndarray of joint angles
    ```
