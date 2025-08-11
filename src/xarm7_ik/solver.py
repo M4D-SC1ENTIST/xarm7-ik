@@ -15,10 +15,19 @@ class InverseKinematicsSolver():
     def __init__(self, 
                  use_linear_motor=False,
                  linear_motor_x_offset=0.0,
-                 rotation_repr=RotationRepresentation.QUATERNION,
+                 rotation_repr="quaternion",
                  opt_solver=nlopt.LD_SLSQP):
         self.use_linear_motor = use_linear_motor
         self.linear_motor_x_offset = linear_motor_x_offset
+
+        if rotation_repr == "quaternion":
+            self.rotation_repr = RotationRepresentation.QUATERNION
+        elif rotation_repr == "euler":
+            self.rotation_repr = RotationRepresentation.EULER
+        elif rotation_repr == "axis-angle":
+            self.rotation_repr = RotationRepresentation.AXIS_ANGLE
+        else:
+            raise ValueError("Invalid rotation representation. Choose from 'quaternion', 'euler', 'axis-angle'.")
 
         if self.use_linear_motor:
             lower_bounds = [0.0, -6.28319, -2.05900, -6.28319, -1.91980, -6.28319, -1.69297, -6.28319]
@@ -69,17 +78,16 @@ class InverseKinematicsSolver():
     def inverse_kinematics(self, 
                            initial_configuration, 
                            target_gripper_pos, 
-                           target_gripper_rot, 
-                           rot_repr=RotationRepresentation.QUATERNION):
-        if rot_repr == RotationRepresentation.QUATERNION:
+                           target_gripper_rot):
+        if self.rotation_repr == RotationRepresentation.QUATERNION:
             pass
-        elif rot_repr == RotationRepresentation.EULER:
+        elif self.rotation_repr == RotationRepresentation.EULER:
             target_gripper_rot = R.from_euler('xyz', target_gripper_rot).as_quat()
 
             # from scipy quaternion (X-Y-Z-W) to mujoco quaternion (W-X-Y-Z)
             # Refer to: https://github.com/clemense/quaternion-conventions
             target_gripper_rot = np.array([target_gripper_rot[3], target_gripper_rot[0], target_gripper_rot[1], target_gripper_rot[2]])
-        elif rot_repr == RotationRepresentation.AXIS_ANGLE:
+        elif self.rotation_repr == RotationRepresentation.AXIS_ANGLE:
             target_gripper_axis = target_gripper_rot[:3]
             target_gripper_angle = target_gripper_rot[3]
 

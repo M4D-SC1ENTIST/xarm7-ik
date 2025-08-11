@@ -16,7 +16,7 @@ def main():
     # Create IK solver instance (no linear motor)
     ik_solver = InverseKinematicsSolver(
         use_linear_motor=False,
-        rotation_repr=RotationRepresentation.QUATERNION
+        rotation_repr="quaternion"
     )
 
     # Solve IK and measure frequency
@@ -28,7 +28,6 @@ def main():
             initial_configuration,
             target_gripper_pos,
             target_gripper_rot,
-            rot_repr=RotationRepresentation.QUATERNION
         )
         print("IK result (joint angles):", result)
     end_time = time.time()

@@ -33,17 +33,17 @@ To use the IK solver in your own code:
 
 1. **Import the solver and rotation representation:**
    ```python
-   from xarm7_ik.solver import InverseKinematicsSolver, RotationRepresentation
+   from xarm7_ik.solver import InverseKinematicsSolver
    ```
 
 2. **Create an instance of the solver:**
    - For a standard xArm7 (7-DOF):
      ```python
-     ik_solver = InverseKinematicsSolver(use_linear_motor=False, rotation_repr=RotationRepresentation.QUATERNION)
+     ik_solver = InverseKinematicsSolver(use_linear_motor=False, rotation_repr="quaternion")
      ```
    - For xArm7 with linear rail (8-DOF):
      ```python
-     ik_solver = InverseKinematicsSolver(use_linear_motor=True, rotation_repr=RotationRepresentation.QUATERNION)
+     ik_solver = InverseKinematicsSolver(use_linear_motor=True, rotation_repr="quaternion")
      ```
 
 3. **Call the inverse kinematics method:**
@@ -52,7 +52,7 @@ To use the IK solver in your own code:
        initial_configuration,         # np.ndarray of joint angles (7 or 8 elements)
        target_gripper_pos,            # np.ndarray, shape (3,)
        target_gripper_rot,            # np.ndarray, shape depends on the rotation representation
-       rot_repr=RotationRepresentation.QUATERNION  # or .EULER, .AXIS_ANGLE
+       
        # Quaternions are in the W-X-Y-Z order
        # Euler angles are X-Y-Z
        # Axis-angle representations are (axis, angle)

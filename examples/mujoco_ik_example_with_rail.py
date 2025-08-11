@@ -19,7 +19,7 @@ initial_configuration[0] += 0.37
 # Create IK solver instance (with rail)
 ik_solver = InverseKinematicsSolver(
     use_linear_motor=True,
-    rotation_repr=RotationRepresentation.QUATERNION
+    rotation_repr="quaternion"
 )
 
 # Solve IK
@@ -27,7 +27,6 @@ ik_result = ik_solver.inverse_kinematics(
     initial_configuration,
     TARGET_POS,
     TARGET_QUAT,
-    rot_repr=RotationRepresentation.QUATERNION
 )
 print("IK result (rail + joint angles):", ik_result)
 
