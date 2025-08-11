@@ -65,7 +65,7 @@ For more complete usage and simulation integration, see the scripts in the `exam
 
 ## Citation
 
-If you find this project useful, please consider citing our paper:
+This project was originally developed for our paper that uses xArm7. If you find this project useful, please consider citing our paper:
 
 ```bibtex
 @article{sun2025dynamic,
