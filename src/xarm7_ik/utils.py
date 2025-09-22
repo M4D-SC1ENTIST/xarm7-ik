@@ -160,3 +160,80 @@ def compute_transform_error(curr_pos, curr_quat, target_pos, target_quat):
     quat_error = quaternion_displacement_based_distance(curr_quat, target_quat)
 
     return pos_error + quat_error
+
+
+@jit(nopython=True)
+def euler_z_to_quaternion(angle):
+    """Convert a Z-axis Euler angle to quaternion (w, x, y, z)."""
+    half_angle = angle / 2.0
+    cos_half = np.cos(half_angle)
+    sin_half = np.sin(half_angle)
+    return np.array([cos_half, 0.0, 0.0, sin_half])
+
+
+@jit(nopython=True)
+def apply_base_rotation_to_transform(position, quaternion, base_rotation_offset):
+    """Apply base rotation offset to a transform (position, quaternion)."""
+    if abs(base_rotation_offset) < 1e-6:
+        return position, quaternion
+    
+    # Create base rotation quaternion (rotation around Z-axis)
+    base_quat = euler_z_to_quaternion(base_rotation_offset)
+    
+    # Create rotation matrix from base quaternion for position transformation
+    base_rot_matrix = quaternion_to_rotation_matrix(base_quat)
+    
+    # Apply base rotation to position
+    rotated_position = base_rot_matrix @ position
+    
+    # Apply base rotation to orientation
+    rotated_quaternion = quaternion_multiply(base_quat, quaternion)
+    rotated_quaternion = normalize_quaternion(rotated_quaternion)
+    
+    return rotated_position, rotated_quaternion
+
+
+@jit(nopython=True)
+def inverse_base_rotation_to_transform(position, quaternion, base_rotation_offset):
+    """Apply inverse base rotation offset to a transform (position, quaternion)."""
+    if abs(base_rotation_offset) < 1e-6:
+        return position, quaternion
+    
+    # Create inverse base rotation quaternion (rotation around -Z-axis)
+    base_quat = euler_z_to_quaternion(-base_rotation_offset)
+    
+    # Create rotation matrix from base quaternion for position transformation
+    base_rot_matrix = quaternion_to_rotation_matrix(base_quat)
+    
+    # Apply inverse base rotation to position
+    rotated_position = base_rot_matrix @ position
+    
+    # Apply inverse base rotation to orientation
+    rotated_quaternion = quaternion_multiply(base_quat, quaternion)
+    rotated_quaternion = normalize_quaternion(rotated_quaternion)
+    
+    return rotated_position, rotated_quaternion
+
+
+@jit(nopython=True)
+def quaternion_to_rotation_matrix(q):
+    """Convert quaternion (w, x, y, z) to rotation matrix."""
+    w, x, y, z = q
+    
+    # Normalize quaternion
+    norm = np.sqrt(w*w + x*x + y*y + z*z)
+    w, x, y, z = w/norm, x/norm, y/norm, z/norm
+    
+    # Create rotation matrix
+    R = np.zeros((3, 3), dtype=np.float64)
+    R[0, 0] = 1 - 2*(y*y + z*z)
+    R[0, 1] = 2*(x*y - w*z)
+    R[0, 2] = 2*(x*z + w*y)
+    R[1, 0] = 2*(x*y + w*z)
+    R[1, 1] = 1 - 2*(x*x + z*z)
+    R[1, 2] = 2*(y*z - w*x)
+    R[2, 0] = 2*(x*z - w*y)
+    R[2, 1] = 2*(y*z + w*x)
+    R[2, 2] = 1 - 2*(x*x + y*y)
+    
+    return R

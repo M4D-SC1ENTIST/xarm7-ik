@@ -3,7 +3,7 @@ import nlopt
 import enum
 from numba import jit
 from scipy.spatial.transform import Rotation as R
-from .utils import normalize_quaternion, quaternion_multiply, axis_angle_to_quaternion
+from .utils import normalize_quaternion, quaternion_multiply, axis_angle_to_quaternion, inverse_base_rotation_to_transform
 from .kinematics import ik_objective_function_nlopt
 
 class RotationRepresentation(enum.Enum):
@@ -16,9 +16,11 @@ class InverseKinematicsSolver():
                  use_linear_motor=False,
                  linear_motor_x_offset=0.0,
                  rotation_repr="quaternion",
-                 opt_solver=nlopt.LD_SLSQP):
+                 opt_solver=nlopt.LD_SLSQP,
+                 base_rotation_offset=0.0):
         self.use_linear_motor = use_linear_motor
         self.linear_motor_x_offset = linear_motor_x_offset
+        self.base_rotation_offset = base_rotation_offset
 
         if rotation_repr == "quaternion":
             self.rotation_repr = RotationRepresentation.QUATERNION
@@ -72,7 +74,8 @@ class InverseKinematicsSolver():
                                                         temp_target_pos, 
                                                         temp_target_quat, 
                                                         self.use_linear_motor, 
-                                                        self.linear_motor_x_offset)[0])
+                                                        self.linear_motor_x_offset,
+                                                        self.base_rotation_offset)[0])
         self.opt.optimize(temp_state)
 
     def inverse_kinematics(self, 
@@ -100,6 +103,9 @@ class InverseKinematicsSolver():
         target_gripper_rot = quaternion_multiply(self.quat_offset, target_gripper_rot)
         target_gripper_rot = normalize_quaternion(target_gripper_rot)
 
+        # Note: No need to transform target pose since base rotation is now applied 
+        # directly in forward kinematics at the base of the kinematic chain
+
         try:
             self.opt.set_min_objective(
                 lambda x, grad: ik_objective_function_nlopt(x, 
@@ -107,7 +113,8 @@ class InverseKinematicsSolver():
                                                             target_gripper_pos, 
                                                             target_gripper_rot, 
                                                             self.use_linear_motor, 
-                                                            self.linear_motor_x_offset)[0])
+                                                            self.linear_motor_x_offset,
+                                                            self.base_rotation_offset)[0])
 
             if self.use_linear_motor:
                 result = self.opt.optimize(initial_configuration[:8])
@@ -124,3 +131,21 @@ class InverseKinematicsSolver():
                 result = initial_configuration[:7]
 
             return result
+
+    def forward_kinematics(self, configuration):
+        """
+        Compute forward kinematics with the solver's configuration.
+        
+        Args:
+            configuration: Joint configuration array
+            
+        Returns:
+            tuple: (position, quaternion) of the end-effector
+        """
+        from .kinematics import forward_kinematics
+        return forward_kinematics(
+            configuration, 
+            use_linear_motor=self.use_linear_motor, 
+            linear_motor_x_offset=self.linear_motor_x_offset,
+            base_rotation_offset=self.base_rotation_offset
+        )

@@ -8,7 +8,7 @@ import os
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "xarm7_env/mjcf/xarm7.xml")
 
 # Target gripper position and orientation
-TARGET_POS = np.array([0.0, -0.5, 0.0])
+TARGET_POS = np.array([0.5, 0.2, 0.3])
 TARGET_QUAT = np.array([1.0, 0.0, 0.0, 0.0])  # Identity quaternion
 
 # Initial joint configuration (7 DOF)
@@ -17,7 +17,8 @@ initial_configuration = np.zeros(7)
 # Create IK solver instance
 ik_solver = InverseKinematicsSolver(
     use_linear_motor=False,
-    rotation_repr="quaternion"
+    rotation_repr="quaternion",
+    base_rotation_offset=-np.pi/2
 )
 
 # Solve IK

@@ -1,12 +1,13 @@
 import numpy as np
 from numba import jit
-from .utils import compute_transform_error, matrix_to_quaternion
+from .utils import compute_transform_error, matrix_to_quaternion, apply_base_rotation_to_transform
 from typing import Tuple
 
 @jit(nopython=True)
 def forward_kinematics(configuration: np.ndarray, 
                        use_linear_motor: bool = False,
-                       linear_motor_x_offset=0.0) -> Tuple[np.ndarray, np.ndarray]:
+                       linear_motor_x_offset=0.0,
+                       base_rotation_offset=0.0) -> Tuple[np.ndarray, np.ndarray]:
     if use_linear_motor and configuration.shape[0] != 8:
         raise ValueError("Configuration must have 8 elements when using linear motor.")
     if not use_linear_motor and configuration.shape[0] != 7:
@@ -32,7 +33,20 @@ def forward_kinematics(configuration: np.ndarray,
         [0.0, 0.097, 0.0, joint_angles[6]]
     ], dtype=np.float64)
 
+    # Apply base rotation offset at the beginning of the kinematic chain
     T = np.eye(4, dtype=np.float64)
+    if abs(base_rotation_offset) > 1e-6:
+        # Create base rotation matrix (rotation around Z-axis)
+        cos_rot = np.cos(base_rotation_offset)
+        sin_rot = np.sin(base_rotation_offset)
+        T_base = np.array([
+            [cos_rot, -sin_rot, 0.0, 0.0],
+            [sin_rot, cos_rot, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0]
+        ], dtype=np.float64)
+        T = T @ T_base
+    
     for i in range(dh_params.shape[0]):
         a, d, alpha, theta = dh_params[i]
         T_i = np.array([
@@ -56,23 +70,23 @@ def forward_kinematics(configuration: np.ndarray,
 
 
 @jit(nopython=True)
-def ik_objective_function(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset=0.0):
-    curr_pos, curr_quat = forward_kinematics(configuration, use_linear_motor, linear_motor_x_offset)
+def ik_objective_function(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset=0.0, base_rotation_offset=0.0):
+    curr_pos, curr_quat = forward_kinematics(configuration, use_linear_motor, linear_motor_x_offset, base_rotation_offset)
     error = compute_transform_error(curr_pos, curr_quat, target_pos, target_quat)
     return error
 
 @jit(nopython=True)
-def compute_ik_obj_func_grad_finite_diff(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset=0.0, perturbation=1e-6):
+def compute_ik_obj_func_grad_finite_diff(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset=0.0, base_rotation_offset=0.0, perturbation=1e-6):
     configuration = np.copy(configuration)
     grad = np.zeros_like(configuration)
 
     for i in range(len(configuration)):
         original_value = configuration[i]
         configuration[i] += perturbation
-        error_plus = ik_objective_function(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset)
+        error_plus = ik_objective_function(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset, base_rotation_offset)
 
         configuration[i] = original_value - perturbation
-        error_minus = ik_objective_function(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset)
+        error_minus = ik_objective_function(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset, base_rotation_offset)
 
         grad[i] = (error_plus - error_minus) / (2 * perturbation)
         configuration[i] = original_value
@@ -80,12 +94,12 @@ def compute_ik_obj_func_grad_finite_diff(configuration, target_pos, target_quat,
     return grad
 
 
-def ik_objective_function_nlopt(configuration, grad, target_pos, target_quat, use_linear_motor, linear_motor_x_offset=0.0):
+def ik_objective_function_nlopt(configuration, grad, target_pos, target_quat, use_linear_motor, linear_motor_x_offset=0.0, base_rotation_offset=0.0):
     try:
         if grad.shape[0] != configuration.shape[0]:
             grad = np.zeros_like(configuration)
-        error = ik_objective_function(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset)
-        grad[:] = compute_ik_obj_func_grad_finite_diff(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset)
+        error = ik_objective_function(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset, base_rotation_offset)
+        grad[:] = compute_ik_obj_func_grad_finite_diff(configuration, target_pos, target_quat, use_linear_motor, linear_motor_x_offset, base_rotation_offset)
         return error, grad
     except Exception as e:
         print("Error in objective function:", str(e))
