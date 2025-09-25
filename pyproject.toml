@@ -1,7 +1,7 @@
 
 [project]
 name = "xarm7-ik"
-version = "0.3.1"
+version = "0.3.2"
 description = "A fast inverse kinematics (IK) solver for xArm7 with/without the linear rail and base rotation offset support"
 readme = "README.md"
 requires-python = ">=3.10"
