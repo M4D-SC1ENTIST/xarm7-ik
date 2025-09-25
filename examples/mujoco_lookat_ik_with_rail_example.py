@@ -1,5 +1,5 @@
 import numpy as np
-from xarm7_ik.kinematics import LookAtInverseKinematicsSolver
+from xarm7_ik.solver import LookAtInverseKinematicsSolver
 import mujoco
 import mujoco.viewer
 import os

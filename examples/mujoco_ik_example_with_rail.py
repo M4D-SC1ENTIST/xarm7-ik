@@ -8,9 +8,9 @@ import os
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "xarm7_env/mjcf/xarm7_with_linear_rail.xml")
 
 # Target gripper position and orientation
-TARGET_POS = np.array([0.6, -0.6, 0.3])  
+TARGET_POS = np.array([0.2, -0.0, 0.3])  
 #TARGET_QUAT = np.array([0.707, 0.0, 0.0, 0.707])  
-TARGET_QUAT = np.array([0.707, 0.707, 0.0, 0.0])  
+TARGET_QUAT = np.array([1, 0, 0.0, 0.0])  
 
 # Initial joint configuration (8 DOF: rail + 7 joints)
 initial_configuration = np.zeros(8)

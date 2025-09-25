@@ -188,15 +188,15 @@ def quaternion_rotate(q, v):
 def calculate_look_at_error(eef_pos, lookat_pos, eef_quat, lookat_offset=np.array([0.0, 0.0, -0.15])):
     v = quaternion_rotate(eef_quat, np.array([0.0, 0.0, 1.0]))
 
-    a = lookat_pos
-    b = lookat_pos + 999 * v
+    a = eef_pos
+    b = eef_pos + 999 * v
 
     offset = lookat_offset
     eef_pos += offset
 
-    proj_t_v = proj_onto_line_segment(eef_pos, a, b)
+    proj_t_v = proj_onto_line_segment(lookat_pos, a, b)
 
-    error = np.sum((proj_t_v - eef_pos) ** 2)
+    error = np.sum((proj_t_v - lookat_pos) ** 2)
 
     return error
 

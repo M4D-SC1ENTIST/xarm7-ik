@@ -1,5 +1,5 @@
 import numpy as np
-from xarm7_ik.kinematics import LookAtInverseKinematicsSolver
+from xarm7_ik.solver import LookAtInverseKinematicsSolver
 
 def main():
     # Initial joint configuration (7 DOF, no linear motor)

@@ -1,5 +1,5 @@
 import numpy as np
-from xarm7_ik.kinematics import LookAtInverseKinematicsSolver
+from xarm7_ik.solver import LookAtInverseKinematicsSolver
 import mujoco
 import mujoco.viewer
 import os
@@ -14,7 +14,7 @@ class SimpleLookAtVisualizationDemo:
         self.lookat_solver = LookAtInverseKinematicsSolver(
             use_linear_motor=False,
             rotation_repr="quaternion",
-            base_rotation_offset=-np.pi/2,  # Match the MuJoCo model orientation
+            #base_rotation_offset=-np.pi/2,  # Match the MuJoCo model orientation
             lookat_offset=np.array([0.0, 0.0, -0.15])  # Look direction relative to gripper
         )
         
