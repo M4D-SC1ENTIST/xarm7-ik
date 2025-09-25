@@ -161,6 +161,53 @@ def compute_transform_error(curr_pos, curr_quat, target_pos, target_quat):
 
     return pos_error + quat_error
 
+@jit(nopython=True)
+def proj_scalar(v, u):
+    return np.dot(v, u) / np.dot(u, u)
+
+
+@jit(nopython=True)
+def proj_clamped(v, u):
+    scalar = proj_scalar(v, u)
+    scalar = min(max(scalar, 0), 1)
+    return scalar * u
+
+
+@jit(nopython=True)
+def proj_onto_line_segment(p, a, b):
+    return proj_clamped(p - a, b - a) + a
+
+
+@jit(nopython=True)
+def quaternion_rotate(q, v):
+    qv = np.array([0.0, v[0], v[1], v[2]])
+    normalized_q = normalize_quaternion(q)
+    return quaternion_multiply(quaternion_multiply(normalized_q, qv), quaternion_conjugate(normalized_q))[1:]
+
+@jit(nopython=True)
+def calculate_look_at_error(eef_pos, lookat_pos, eef_quat, lookat_offset=np.array([0.0, 0.0, -0.15])):
+    v = quaternion_rotate(eef_quat, np.array([0.0, 0.0, 1.0]))
+
+    a = lookat_pos
+    b = lookat_pos + 999 * v
+
+    offset = lookat_offset
+    eef_pos += offset
+
+    proj_t_v = proj_onto_line_segment(eef_pos, a, b)
+
+    error = np.sum((proj_t_v - eef_pos) ** 2)
+
+    return error
+
+
+@jit(nopython=True)
+def calculate_side_axis_error(eef_quat):
+    s = quaternion_rotate(eef_quat, np.array([0.0, 1.0, 0.0]))
+    up = np.array([0.0, 0.0, 1.0])
+    error = np.dot(s, up) ** 2
+    return error
+
 
 @jit(nopython=True)
 def euler_z_to_quaternion(angle):
